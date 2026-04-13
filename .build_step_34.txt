@@ -1,0 +1,3 @@
+Step 35: Fix pricing calculation logic bug
+Date: 2026-04-13 11:17:24
+Author: Miaoyuan SHI <myshi@qq.com>
