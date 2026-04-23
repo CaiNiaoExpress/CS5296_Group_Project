@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pricing-worker
+  template:
+    metadata:
+      labels:
+        app: pricing-worker
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-spot: "true"
+      tolerations:
+        - key: "spot"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      containers:
+        - name: worker
+          image: your-registry/pricing-worker:latest
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "256Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"

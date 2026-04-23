@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Payment Status</title>
+    <style>
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+      .nav { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; }
+      .nav a { color: #cbd5e1; margin-left: 12px; text-decoration: none; }
+      .container { max-width: 900px; margin: 20px auto; padding: 0 16px; }
+      .card { background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 3px 10px rgba(2, 6, 23, 0.08); }
+      .row { margin: 8px 0; color: #334155; }
+      .status { font-weight: 700; }
+      .pending { color: #d97706; }
+      .paid { color: #16a34a; }
+      button { border: none; border-radius: 8px; padding: 10px 14px; background: #2563eb; color: #fff; cursor: pointer; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="nav">
+      <div>CarMall Payment Center</div>
+      <div>
+        <a href="/mall">Mall</a>
+        <a href="/dashboard">Dashboard</a>
+      </div>
+    </div>
+    <div class="container">
+      <div class="card">
+        <h2>Order Details</h2>
+        <div class="row">Order ID: <span id="orderId">-</span></div>
+        <div class="row">Model: <span id="carName">-</span></div>
+        <div class="row">Amount: <span id="price">-</span></div>
+        <div class="row">Contact: <span id="customer">-</span></div>
+        <div class="row">Phone: <span id="phone">-</span></div>
+        <div class="row">Status: <span class="status" id="statusText">-</span></div>
+        <button id="payBtn">Simulate Payment Complete</button>
+      </div>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const orderId = params.get("order_id");
+
+      function fmt(v) {
+        return "¥ " + Number(v || 0).toLocaleString("zh-CN");
+      }
+
+      function render(order) {
+        document.getElementById("orderId").textContent = order.order_id || "-";
+        document.getElementById("carName").textContent = order.car_name || "-";
+        document.getElementById("price").textContent = fmt(order.price);
+        document.getElementById("customer").textContent = order.customer_name || "-";
+        document.getElementById("phone").textContent = order.phone || "-";
+        const st = document.getElementById("statusText");
+        st.textContent = order.status || "-";
+        st.className = "status " + (order.status === "paid" ? "paid" : "pending");
+      }
+
+      async function load() {
+        if (!orderId) return;
+        const res = await fetch(`/api/v1/orders/${encodeURIComponent(orderId)}`);
+        const data = await res.json();
+        render(data);
+      }
+
+      document.getElementById("payBtn").addEventListener("click", async () => {
+        if (!orderId) return;
+        const res = await fetch(`/api/v1/orders/${encodeURIComponent(orderId)}/pay`, {
+          method: "POST"
+        });
+        const data = await res.json();
+        render(data);
+      });
+
+      load();
+    </script>
+  </body>
+</html>

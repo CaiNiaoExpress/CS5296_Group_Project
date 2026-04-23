@@ -1,3 +1,0 @@
-Step 19: Add metrics middleware for HTTP routes
-Date: 2026-03-27 19:27:42
-Author: Shengkang LIU <shkliu@qq.com>

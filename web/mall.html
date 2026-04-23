@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car E-Commerce Mall</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+      .nav { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+      .brand { font-size: 18px; font-weight: 700; }
+      .nav a { color: #cbd5e1; text-decoration: none; margin-left: 14px; font-size: 14px; }
+      .hero { padding: 48px 24px; background: linear-gradient(130deg, #0ea5e9, #6366f1); color: #fff; }
+      .hero h1 { margin: 0 0 12px; font-size: 34px; }
+      .hero p { margin: 0; opacity: 0.95; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+      .toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
+      .toolbar input, .toolbar select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+      .toolbar button { padding: 10px 12px; }
+      .catalog-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: #475569; font-size: 14px; }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 10px rgba(2, 6, 23, 0.08); }
+      .card img { width: 100%; height: 190px; object-fit: cover; background: #e2e8f0; }
+      .body { padding: 14px; }
+      .name { font-size: 18px; margin: 0 0 8px; }
+      .meta { color: #475569; font-size: 14px; margin: 4px 0; }
+      .price { font-size: 22px; color: #dc2626; font-weight: 700; margin: 10px 0; }
+      .actions { display: flex; gap: 8px; }
+      button { border: none; border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+      .btn-primary { background: #2563eb; color: #fff; }
+      .btn-light { background: #e2e8f0; color: #1e293b; }
+      .panel { margin-top: 24px; background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 3px 10px rgba(2, 6, 23, 0.08); }
+      .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+      .cart-total { margin-top: 10px; font-weight: 700; }
+      .chat-log { height: 180px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 14px; }
+      .chat-msg { margin: 6px 0; line-height: 1.5; }
+      .chat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 14px; }
+      .chat-card { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; }
+      .chat-card img { width: 100%; height: 120px; object-fit: cover; background: #e2e8f0; }
+      .chat-card-body { padding: 10px; }
+      .chat-card-name { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+      .chat-card-meta { font-size: 12px; color: #475569; margin: 3px 0; }
+      .chat-card-price { color: #dc2626; font-weight: 700; margin-top: 6px; }
+      .chat-input { display: flex; gap: 8px; margin-top: 10px; }
+      .chat-input input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+      @media (max-width: 1000px) { .grid, .chat-cards { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 700px) { .grid, .chat-cards { grid-template-columns: 1fr; } .hero h1 { font-size: 28px; } }
+    </style>
+  </head>
+  <body>
+    <div class="nav">
+      <div class="brand">CarMall E-Commerce</div>
+      <div>
+        <a href="/mall">Home</a>
+        <a href="/payment">Payment Status</a>
+        <a href="/dashboard">Dashboard</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h1>Smart Car Selection, One-Stop Shopping Service</h1>
+      <p>Support for online consultation, personalized pricing, loan plan recommendations, built on high-concurrency cloud-native architecture.</p>
+    </section>
+
+    <div class="container">
+      <div class="toolbar">
+        <input id="searchInput" placeholder="Search car model keywords, e.g. EV / SUV" />
+        <select id="priceFilter">
+          <option value="all">All Prices</option>
+          <option value="lt200">Under ¥200,000</option>
+          <option value="200to300">¥200,000 - ¥300,000</option>
+          <option value="gt300">Over ¥300,000</option>
+        </select>
+        <button class="btn-light" id="clearSearchBtn">Restore Home Recommendation</button>
+      </div>
+
+      <div class="catalog-meta">
+        <div id="catalogTitle">Featured Recommendations</div>
+        <div id="catalogHint">By default, only some hot models are displayed. Please use search or filters to view other products.</div>
+      </div>
+
+      <div id="carGrid" class="grid"></div>
+
+      <div class="panel">
+        <h3>Shopping Cart</h3>
+        <div id="cartList"></div>
+        <div class="cart-total">Total: <span id="cartTotal">¥ 0</span></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <input id="buyerName" placeholder="Contact Name" style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;" />
+          <input id="buyerPhone" placeholder="Contact Phone" style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;" />
+          <button class="btn-primary" id="checkoutBtn">Submit Order</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Smart Sales Assistant</h3>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-input">
+          <input id="chatMessage" placeholder="E.g.: I want to know the discounted price and installment plan for EV-Pro" />
+          <button class="btn-primary" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const sessionId = "mall-session-" + Date.now();
+      let cars = [];
+      const cart = [];
+      const featuredLimit = 12;
+
+      function formatPrice(v) {
+        return "¥ " + Number(v).toLocaleString("en-US");
+      }
+
+      function pushChat(text, fromUser) {
+        const log = document.getElementById("chatLog");
+        const div = document.createElement("div");
+        div.className = "chat-msg";
+        div.textContent = (fromUser ? "You: " : "Assistant: ") + text;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function pushAssistantReply(text, recommendedCars) {
+        pushChat(text, false);
+        if (!recommendedCars || recommendedCars.length === 0) return;
+
+        const log = document.getElementById("chatLog");
+        const wrap = document.createElement("div");
+        wrap.className = "chat-cards";
+        recommendedCars.forEach((car) => {
+          const el = document.createElement("div");
+          el.className = "chat-card";
+          el.innerHTML = `
+            <img src="${car.image}" alt="${car.name}" />
+            <div class="chat-card-body">
+              <div class="chat-card-name">${car.name}</div>
+              <div class="chat-card-meta">Type: ${car.type}</div>
+              <div class="chat-card-meta">Range: ${car.range_km} km</div>
+              <div class="chat-card-meta">0-100: ${car.acceleration_0_100} s</div>
+              <div class="chat-card-price">${formatPrice(car.base_price)}</div>
+              <div class="actions" style="margin-top:8px;">
+                <button class="btn-primary" data-chat-model="${car.name}">Continue Consultation</button>
+                <button class="btn-light" data-chat-cart="${car.id}">Add to Cart</button>
+              </div>
+            </div>
+          `;
+          wrap.appendChild(el);
+        });
+        log.appendChild(wrap);
+        log.scrollTop = log.scrollHeight;
+
+        wrap.querySelectorAll("button[data-chat-model]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const model = btn.getAttribute("data-chat-model");
+            sendChat(`Please continue introducing ${model}'s configuration, discounts, and test drive arrangements`);
+          });
+        });
+        wrap.querySelectorAll("button[data-chat-cart]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-chat-cart");
+            const target = cars.find((v) => v.id === id);
+            if (!target) return;
+            cart.push(target);
+            renderCart();
+            pushChat(`Added ${target.name} to cart.`, false);
+          });
+        });
+      }
+
+      function renderCart() {
+        const root = document.getElementById("cartList");
+        root.innerHTML = "";
+        let total = 0;
+        cart.forEach((item, idx) => {
+          total += item.base_price;
+          const row = document.createElement("div");
+          row.className = "cart-row";
+          row.innerHTML = `
+            <span>${item.name}</span>
+            <span>${formatPrice(item.base_price)} <button class="btn-light" data-rm="${idx}" style="padding:4px 8px;">Remove</button></span>
+          `;
+          root.appendChild(row);
+        });
+        document.getElementById("cartTotal").textContent = formatPrice(total);
+        root.querySelectorAll("button[data-rm]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = Number(btn.getAttribute("data-rm"));
+            cart.splice(idx, 1);
+            renderCart();
+          });
+        });
+      }
+
+      function renderCars(list) {
+        const root = document.getElementById("carGrid");
+        root.innerHTML = "";
+        if (list.length === 0) {
+          root.innerHTML = `<div class="panel" style="grid-column: 1 / -1;">No matching models found. Please try different keywords or price ranges.</div>`;
+          return;
+        }
+        list.forEach((car) => {
+          const el = document.createElement("div");
+          el.className = "card";
+          el.innerHTML = `
+            <img src="${car.image}" alt="${car.name}" />
+            <div class="body">
+              <h4 class="name">${car.name}</h4>
+              <div class="meta">Type: ${car.type}</div>
+              <div class="meta">Range: ${car.range_km} km</div>
+              <div class="meta">0-100 Acceleration: ${car.acceleration_0_100} s</div>
+              <div class="price">${formatPrice(car.base_price)}</div>
+              <div class="actions">
+                <button class="btn-primary" data-model="${car.name}">Consult Price</button>
+                <button class="btn-light" data-cart="${car.id}">Add to Cart</button>
+              </div>
+            </div>
+          `;
+          root.appendChild(el);
+        });
+
+        root.querySelectorAll("button[data-model]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const model = btn.getAttribute("data-model");
+            sendChat(`Please give me the discounted price for ${model}`);
+          });
+        });
+
+        root.querySelectorAll("button[data-cart]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-cart");
+            const target = cars.find((v) => v.id === id);
+            if (!target) return;
+            cart.push(target);
+            renderCart();
+            pushChat(`Added ${target.name} to cart.`, false);
+          });
+        });
+      }
+
+      function applyFilter() {
+        const kw = document.getElementById("searchInput").value.trim().toLowerCase();
+        const pf = document.getElementById("priceFilter").value;
+        const title = document.getElementById("catalogTitle");
+        const hint = document.getElementById("catalogHint");
+
+        if (!kw && pf === "all") {
+          renderCars(cars.slice(0, featuredLimit));
+          title.textContent = "Featured Recommendations";
+          hint.textContent = `Currently displaying ${featuredLimit} hot models. All ${cars.length} products are available via search or filters.`;
+          return;
+        }
+
+        const filtered = cars.filter((car) => {
+          const textHit = !kw || (car.name + " " + car.type).toLowerCase().includes(kw);
+          const p = car.base_price;
+          const priceHit =
+            pf === "all" ||
+            (pf === "lt200" && p < 200000) ||
+            (pf === "200to300" && p >= 200000 && p <= 300000) ||
+            (pf === "gt300" && p > 300000);
+          return textHit && priceHit;
+        });
+        renderCars(filtered);
+        title.textContent = "Search Results";
+        hint.textContent = `Found ${filtered.length} matching products (total ${cars.length} items in database).`;
+      }
+
+      async function sendChat(message) {
+        pushChat(message, true);
+        const res = await fetch("/api/v1/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            session_id: sessionId,
+            user_id: "mall-user-demo",
+            message
+          })
+        });
+        const data = await res.json();
+        pushAssistantReply(`${data.reply} (intent: ${data.intent})`, data.recommended_cars || []);
+      }
+
+      document.getElementById("sendBtn").addEventListener("click", () => {
+        const input = document.getElementById("chatMessage");
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = "";
+        sendChat(msg);
+      });
+      document.getElementById("searchInput").addEventListener("input", applyFilter);
+      document.getElementById("priceFilter").addEventListener("change", applyFilter);
+      document.getElementById("clearSearchBtn").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("priceFilter").value = "all";
+        applyFilter();
+      });
+      document.getElementById("checkoutBtn").addEventListener("click", async () => {
+        if (cart.length === 0) {
+          pushChat("Shopping cart is empty. Please add models first.", false);
+          return;
+        }
+        const customerName = document.getElementById("buyerName").value.trim();
+        const phone = document.getElementById("buyerPhone").value.trim();
+        if (!customerName || !phone) {
+          pushChat("Please fill in contact name and phone number.", false);
+          return;
+        }
+        const item = cart[0];
+        const res = await fetch("/api/v1/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            car_id: item.id,
+            car_name: item.name,
+            price: item.base_price,
+            customer_name: customerName,
+            phone
+          })
+        });
+        const data = await res.json();
+        if (data.order_id) {
+          pushChat(`Order created successfully: ${data.order_id}, redirecting to payment page.`, false);
+          setTimeout(() => {
+            window.location.href = `/payment?order_id=${encodeURIComponent(data.order_id)}`;
+          }, 700);
+        } else {
+          pushChat("Order creation failed, please try again later.", false);
+        }
+      });
+
+      async function init() {
+        const res = await fetch("/api/v1/cars");
+        cars = await res.json();
+        applyFilter();
+        renderCart();
+        pushChat("Hello, welcome to CarMall. You can click 'Consult Price' or directly enter your requirements.", false);
+      }
+      init();
+    </script>
+  </body>
+</html>

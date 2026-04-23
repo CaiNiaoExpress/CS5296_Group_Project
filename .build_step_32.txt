@@ -1,3 +1,0 @@
-Step 33: Create k6 performance test scripts
-Date: 2026-04-10 10:43:41
-Author: Shengkang LIU <shkliu@qq.com>

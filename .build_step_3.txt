@@ -1,3 +1,0 @@
-Step 4: Create main entry point in cmd/gateway
-Date: 2026-03-17 17:22:54
-Author: Shengkang LIU <shkliu@qq.com>

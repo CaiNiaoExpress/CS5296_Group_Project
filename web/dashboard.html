@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Mall Agent Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+      .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+      .card { background: #1e293b; padding: 16px; border-radius: 8px; }
+      .title { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
+      .value { font-size: 26px; font-weight: bold; }
+      .panel { background: #1e293b; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { border-bottom: 1px solid #334155; text-align: left; padding: 8px; }
+      .hint { color: #94a3b8; font-size: 12px; margin-top: 4px; }
+      @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Car Sales Agent Real-time Dashboard</h1>
+      <p class="hint">Automatically refreshes every 2 seconds. Can be used to demonstrate system throughput, latency, and smart pricing async task processing status.</p>
+
+      <div class="grid">
+        <div class="card"><div class="title">Total Requests</div><div class="value" id="totalRequests">0</div></div>
+        <div class="card"><div class="title">Requests Last Minute</div><div class="value" id="rpm">0</div></div>
+        <div class="card"><div class="title">Avg Latency (ms)</div><div class="value" id="avgLatency">0</div></div>
+        <div class="card"><div class="title">P95 Latency (ms)</div><div class="value" id="p95Latency">0</div></div>
+      </div>
+
+      <div class="panel">
+        <h3>Intent Distribution</h3>
+        <canvas id="intentChart" height="100"></canvas>
+      </div>
+
+      <div class="panel">
+        <h3>Request Rate Trend (Last 20 Samples)</h3>
+        <canvas id="rpmChart" height="100"></canvas>
+      </div>
+
+      <div class="panel">
+        <h3>Smart Pricing Task Status</h3>
+        <p class="hint">
+          Total: <span id="taskTotal">0</span>,
+          Done: <span id="taskDone">0</span>,
+          InProgress: <span id="taskRunning">0</span>
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Task ID</th>
+              <th>Status</th>
+              <th>Final Price</th>
+              <th>Discount</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody id="taskRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const intentCtx = document.getElementById("intentChart");
+      const rpmCtx = document.getElementById("rpmChart");
+      const rpmLabels = [];
+      const rpmValues = [];
+
+      const intentChart = new Chart(intentCtx, {
+        type: "pie",
+        data: { labels: [], datasets: [{ data: [], backgroundColor: ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"] }] },
+      });
+
+      const rpmChart = new Chart(rpmCtx, {
+        type: "line",
+        data: { labels: rpmLabels, datasets: [{ label: "RPM", data: rpmValues, borderColor: "#38bdf8", tension: 0.2 }] },
+        options: { scales: { y: { beginAtZero: true } } },
+      });
+
+      function formatTime(date) {
+        const d = new Date(date);
+        return d.toLocaleTimeString('en-US', { hour12: false });
+      }
+
+      function renderTasks(tasks) {
+        const tbody = document.getElementById("taskRows");
+        tbody.innerHTML = "";
+        tasks.forEach((task) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${task.task_id}</td>
+            <td>${task.status}</td>
+            <td>${task.result ? task.result.final_price : "-"}</td>
+            <td>${task.result ? (task.result.discount * 100).toFixed(1) + "%" : "-"}</td>
+            <td>${formatTime(task.created_at)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function refresh() {
+        const res = await fetch("/api/v1/metrics");
+        const data = await res.json();
+
+        document.getElementById("totalRequests").textContent = data.total_requests;
+        document.getElementById("rpm").textContent = data.requests_last_minute;
+        document.getElementById("avgLatency").textContent = Number(data.avg_latency_ms || 0).toFixed(1);
+        document.getElementById("p95Latency").textContent = data.p95_latency_ms || 0;
+        document.getElementById("taskTotal").textContent = data.pricing_tasks_total;
+        document.getElementById("taskDone").textContent = data.pricing_tasks_done;
+        document.getElementById("taskRunning").textContent = data.pricing_tasks_in_progress;
+
+        const intents = data.intent_distribution || {};
+        intentChart.data.labels = Object.keys(intents);
+        intentChart.data.datasets[0].data = Object.values(intents);
+        intentChart.update();
+
+        rpmLabels.push(formatTime(new Date()));
+        rpmValues.push(data.requests_last_minute || 0);
+        if (rpmLabels.length > 20) {
+          rpmLabels.shift();
+          rpmValues.shift();
+        }
+        rpmChart.update();
+
+        renderTasks(data.recent_pricing_tasks || []);
+      }
+
+      refresh();
+      setInterval(refresh, 2000);
+    </script>
+  </body>
+</html>

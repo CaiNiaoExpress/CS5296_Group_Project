@@ -1,3 +1,0 @@
-Step 26: Implement payment form validation
-Date: 2026-04-04 10:19:23
-Author: Miaoyuan SHI <myshi@qq.com>

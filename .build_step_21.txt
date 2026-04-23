@@ -1,3 +1,0 @@
-Step 22: Implement Chart.js integration for metrics
-Date: 2026-03-31 04:30:09
-Author: Shengkang LIU <shkliu@qq.com>

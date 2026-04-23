@@ -1,3 +1,0 @@
-Step 37: Optimize metrics display performance
-Date: 2026-04-16 20:09:16
-Author: Jinkun LIU <jkliu@qq.com>

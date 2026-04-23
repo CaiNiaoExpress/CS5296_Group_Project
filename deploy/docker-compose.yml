@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  gateway:
+    image: golang:1.22
+    container_name: car-mall-gateway
+    working_dir: /app
+    volumes:
+      - ../:/app
+    command: sh -c "go run ./cmd/gateway"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - rocketmq-namesrv
+      - rocketmq-broker
+
+  redis:
+    image: redis:7
+    container_name: car-mall-redis
+    ports:
+      - "6379:6379"
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.2.0
+    container_name: rmq-namesrv
+    command: sh mqnamesrv
+    ports:
+      - "9876:9876"
+
+  rocketmq-broker:
+    image: apache/rocketmq:5.2.0
+    container_name: rmq-broker
+    command: sh mqbroker -n rocketmq-namesrv:9876 --enable-proxy
+    depends_on:
+      - rocketmq-namesrv
+    ports:
+      - "10911:10911"

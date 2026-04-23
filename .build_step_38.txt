@@ -1,3 +1,0 @@
-Step 39: Add responsive design for mobile devices
-Date: 2026-04-21 10:06:59
-Author: Shengkang LIU <shkliu@qq.com>

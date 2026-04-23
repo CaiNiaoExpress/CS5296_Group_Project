@@ -1,3 +1,0 @@
-Step 11: Implement OpenRouter API client
-Date: 2026-03-22 09:38:01
-Author: Jinkun LIU <jkliu@qq.com>
