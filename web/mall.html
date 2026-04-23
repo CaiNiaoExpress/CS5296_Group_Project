@@ -278,7 +278,7 @@
           })
         });
         const data = await res.json();
-        pushAssistantReply(`${data.reply} (intent: ${data.intent})`, data.recommended_cars || []);
+        pushAssistantReply(data.reply, data.recommended_cars || []);
       }
 
       document.getElementById("sendBtn").addEventListener("click", () => {

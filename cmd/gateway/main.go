@@ -130,20 +130,19 @@ func main() {
 			req.UserID = "guest"
 		}
 
-		intentName := intentSvc.Recognize(req.Message)
-		traceID := "trace-" + time.Now().Format("20060102150405.000")
-		lastSession, _ := sessionStore.Get(req.SessionID)
-		recommendedCars := catalog.RecommendCars(req.Message, 3)
-		reply, replySource := buildReply(
-			r.Context(),
-			llmClient,
-			intentName,
-			req.Message,
-			lastSession.LastIntent,
-			lastSession.LastReply,
-			recommendedCars,
-		)
-
+			intentName := intentSvc.Recognize(req.Message)
+			traceID := "trace-" + time.Now().Format("20060102150405.000")
+			lastSession, _ := sessionStore.Get(req.SessionID)
+			recommendedCars := catalog.RecommendCars(req.Message, 3)
+			reply := buildReply(
+				r.Context(),
+				llmClient,
+				intentName,
+				req.Message,
+				lastSession.LastIntent,
+				lastSession.LastReply,
+				recommendedCars,
+			)
 		if intentName == intent.IntentPricing {
 			// Select the first recommended car or fallback to EV Pro
 			modelName := "EV Pro"
@@ -174,7 +173,7 @@ func main() {
 		resp := model.ChatResponse{
 			SessionID:       req.SessionID,
 			Intent:          intentName,
-			Reply:           replySource + ": " + reply,
+			Reply:           reply,
 			TraceID:         traceID,
 			LatencyMS:       time.Since(start).Milliseconds(),
 			RecommendedCars: toCarCardBriefs(recommendedCars),
@@ -203,12 +202,12 @@ func buildReply(
 	lastIntent string,
 	lastReply string,
 	recommendedCars []catalog.Car,
-) (string, string) {
+) string {
 	candidateSummary := buildCandidateSummary(recommendedCars)
 	if llmClient != nil && llmClient.Enabled() {
 		reply, err := llmClient.GenerateSalesReply(ctx, message, intentName, lastIntent, lastReply, candidateSummary)
 		if err == nil {
-			return reply, "openrouter/" + llmClient.Model()
+			return reply
 		}
 		if !errors.Is(err, context.DeadlineExceeded) {
 			log.Printf("openrouter fallback: %v", err)
@@ -217,16 +216,16 @@ func buildReply(
 
 	switch intentName {
 	case intent.IntentPricing:
-		return fallbackReplyWithCars("I've matched several models for detailed comparison and initiated a smart pricing task.", recommendedCars), "fallback"
+		return fallbackReplyWithCars("I've matched several models for detailed comparison and initiated a smart pricing task.", recommendedCars)
 	case intent.IntentPurchase:
-		return fallbackReplyWithCars("I've selected several models suitable for purchase and test drives.", recommendedCars), "fallback"
+		return fallbackReplyWithCars("I've selected several models suitable for purchase and test drives.", recommendedCars)
 	case intent.IntentLoan:
-		return fallbackReplyWithCars("Based on your budget and financing needs, I'll first recommend several models with easier installment plans.", recommendedCars), "fallback"
+		return fallbackReplyWithCars("Based on your budget and financing needs, I'll first recommend several models with easier installment plans.", recommendedCars)
 	default:
 		if strings.Contains(strings.ToLower(message), "hello") {
-			return "Hello, I'm the Car Mall intelligent sales assistant.", "fallback"
+			return "Hello, I'm the Car Mall intelligent sales assistant."
 		}
-		return fallbackReplyWithCars("I've first filtered several models from our current inventory based on your needs.", recommendedCars), "fallback"
+		return fallbackReplyWithCars("I've first filtered several models from our current inventory based on your needs.", recommendedCars)
 	}
 }
 

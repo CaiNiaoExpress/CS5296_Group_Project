@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"time"
 )
 
-const DefaultOpenRouterModel = "openai/gpt-5"
+const DefaultOpenRouterModel = "gpt-4o-mini"
 
 type Client struct {
 	apiKey     string
@@ -45,16 +46,48 @@ type chatResponse struct {
 }
 
 func NewOpenRouterClientFromEnv() *Client {
-	return &Client{
-		apiKey:  os.Getenv("OPENROUTER_API_KEY"),
-		baseURL: getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1/chat/completions"),
-		model:   getEnv("OPENROUTER_MODEL", DefaultOpenRouterModel),
-		httpClient: &http.Client{
-			Timeout: time.Duration(getEnvInt("OPENROUTER_TIMEOUT_SEC", 45)) * time.Second,
-		},
-		siteURL:  getEnv("OPENROUTER_SITE_URL", "http://localhost:8080"),
-		siteName: getEnv("OPENROUTER_SITE_NAME", "car-mall-intelligent-agent"),
+	apiKey := os.Getenv("OPENROUTER_API_KEY")
+	baseURL := getEnv("OPENROUTER_BASE_URL", "https://api.chatanywhere.tech/v1")
+	model := getEnv("OPENROUTER_MODEL", DefaultOpenRouterModel)
+	timeout := time.Duration(getEnvInt("OPENROUTER_TIMEOUT_SEC", 45)) * time.Second
+	siteURL := getEnv("OPENROUTER_SITE_URL", "http://localhost:8080")
+	siteName := getEnv("OPENROUTER_SITE_NAME", "car-mall-intelligent-agent")
+
+	// Normalize base URL (remove trailing slash, handle API endpoint correctly)
+	baseURL = strings.TrimRight(baseURL, "/")
+	if strings.Contains(baseURL, "/chat/completions") {
+		// If baseURL already includes full path, extract just the base
+		baseURL = strings.TrimSuffix(baseURL, "/chat/completions")
+		log.Printf("Warning: OPENROUTER_BASE_URL contains /chat/completions - automatically normalized to: %s", baseURL)
 	}
+
+	log.Printf("OpenRouter Client Configuration:")
+	log.Printf("  API Key: %s", maskAPIKey(apiKey))
+	log.Printf("  Base URL: %s", baseURL)
+	log.Printf("  Model: %s", model)
+	log.Printf("  Timeout: %v", timeout)
+	log.Printf("  Site URL: %s", siteURL)
+	log.Printf("  Site Name: %s", siteName)
+
+	if apiKey == "" {
+		log.Println("Warning: OPENROUTER_API_KEY is not set - OpenRouter integration will be disabled")
+	}
+
+	return &Client{
+		apiKey:     apiKey,
+		baseURL:    baseURL,
+		model:      model,
+		httpClient: &http.Client{Timeout: timeout},
+		siteURL:    siteURL,
+		siteName:   siteName,
+	}
+}
+
+func maskAPIKey(key string) string {
+	if len(key) <= 8 {
+		return key
+	}
+	return key[:4] + "..." + key[len(key)-4:]
 }
 
 func (c *Client) Enabled() bool {
@@ -112,14 +145,16 @@ func (c *Client) GenerateSalesReply(
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL, bytes.NewReader(bodyBytes))
+	// Build full URL by adding /chat/completions to base URL
+	fullURL := c.baseURL + "/chat/completions"
+	log.Printf("Making request to: %s", fullURL)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fullURL, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("HTTP-Referer", c.siteURL)
-	req.Header.Set("X-Title", c.siteName)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
