@@ -31,7 +31,7 @@ go run ./cmd/gateway
 
 You can use local `.env` file:
 ```bash
-cp .env.example .env
+cp .env
 ```
 
 Start the service:
