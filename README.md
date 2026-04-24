@@ -31,7 +31,7 @@ go run ./cmd/gateway
 
 You can use local `.env` file:
 ```bash
-cp .env
+cp .env.example .env
 ```
 
 Start the service:
@@ -83,12 +83,14 @@ open "http://localhost:8080/payment?order_id=ord-1"
 
 You can automatically jump to this page after adding to cart and submitting order in the mall page, or manually access with `order_id` to check status and simulate payment completion.
 
-### Docker Compose (with Redis + RocketMQ)
+### Docker Compose Deployment
 
 ```bash
 cd deploy
 docker compose up
 ```
+
+This will start the application in Docker container with port 8080 exposed. The application uses in-memory queue and cache (no Redis or RocketMQ dependency).
 
 ## Load Testing and Performance Targets
 
